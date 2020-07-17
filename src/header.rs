@@ -81,6 +81,25 @@ impl Default for Header {
 }
 
 impl Header {
+    fn genesis(&self) -> Self {
+        Header {
+            parent_hash: H256::zero(),
+            timestamp: 0,
+            number: 0,
+            author: Address::zero(),
+
+            transactions_root: KECCAK_NULL_RLP,
+            extra_data: vec![],
+
+            state_root: KECCAK_NULL_RLP,
+            gas_used: U256::default(),
+            gas_limit: U256::default(),
+
+            difficulty: U256::default(),
+            hash: None,
+        }
+    }
+
     /// Create a new, default-valued, header.
     pub fn new() -> Self { Self::default() }
 
