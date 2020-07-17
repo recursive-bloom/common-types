@@ -81,7 +81,7 @@ impl Default for Header {
 }
 
 impl Header {
-    fn genesis() -> Self {
+    pub fn genesis() -> Self {
         Header {
             parent_hash: H256::zero(),
             timestamp: 0,
