@@ -1,5 +1,6 @@
 pub mod header;
 pub mod transaction;
+pub mod block;
 
 /// Type for block number.
 pub type BlockNumber = u64;

@@ -2,7 +2,7 @@
 use crate::BlockNumber;
 use ethereum_types::{H256, U256, Address};
 use parity_bytes::Bytes;
-use keccak_hash::{KECCAK_NULL_RLP, KECCAK_EMPTY_LIST_RLP, keccak};
+use keccak_hash::{KECCAK_NULL_RLP, keccak};
 use rlp::{Rlp, RlpStream, Encodable, DecoderError, Decodable};
 
 
@@ -240,7 +240,7 @@ fn change_field<T>(hash: &mut Option<H256>, field: &mut T, value: T) where T: Pa
 
 impl Decodable for Header {
     fn decode(r: &Rlp) -> Result<Self, DecoderError> {
-        let mut blockheader = Header {
+        let blockheader = Header {
             parent_hash: r.val_at(0)?,
             author: r.val_at(1)?,
             state_root: r.val_at(2)?,
