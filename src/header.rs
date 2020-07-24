@@ -104,7 +104,7 @@ impl Header {
     pub fn new() -> Self { Self::default() }
 
     /// Get the parent_hash field of the header.
-    pub fn parent_hash(&self) -> &H256 { &self.parent_hash }
+    pub fn parent_hash(&self) -> H256 { self.parent_hash.clone() }
 
     /// Get the timestamp field of the header.
     pub fn timestamp(&self) -> u64 { self.timestamp }
@@ -113,25 +113,25 @@ impl Header {
     pub fn number(&self) -> BlockNumber { self.number }
 
     /// Get the author field of the header.
-    pub fn author(&self) -> &Address { &self.author }
+    pub fn author(&self) -> Address { self.author.clone() }
 
     /// Get the extra data field of the header.
     pub fn extra_data(&self) -> &Bytes { &self.extra_data }
 
     /// Get the state root field of the header.
-    pub fn state_root(&self) -> &H256 { &self.state_root }
+    pub fn state_root(&self) -> H256 { self.state_root.clone() }
 
     /// Get the transactions root field of the header.
-    pub fn transactions_root(&self) -> &H256 { &self.transactions_root }
+    pub fn transactions_root(&self) -> H256 { self.transactions_root.clone() }
 
     /// Get the gas used field of the header.
-    pub fn gas_used(&self) -> &U256 { &self.gas_used }
+    pub fn gas_used(&self) -> U256 { self.gas_used.clone() }
 
     /// Get the gas limit field of the header.
-    pub fn gas_limit(&self) -> &U256 { &self.gas_limit }
+    pub fn gas_limit(&self) -> U256 { self.gas_limit.clone() }
 
     /// Get the difficulty field of the header.
-    pub fn difficulty(&self) -> &U256 { &self.difficulty }
+    pub fn difficulty(&self) -> U256 { self.difficulty.clone() }
 
     /// Set the number field of the header.
     pub fn set_parent_hash(&mut self, a: H256) {
