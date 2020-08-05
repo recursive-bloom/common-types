@@ -4,7 +4,7 @@
 
 use std::ops::Deref;
 
-use crate::{BlockNumber,Error};
+use crate::{BlockNumber,TransactionIndex,Error};
 
 use ethereum_types::{H256, H160, Address, U256, BigEndianHash};
 use parity_crypto::publickey::{Signature, Secret, Public, recover, public_to_address};
@@ -465,6 +465,111 @@ impl From<SignedTransaction> for PendingTransaction {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum TransactionLocationError {
+    DuplicateLocation,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TransactionLocation {
+    pub block_hash: H256,
+    pub block_number: BlockNumber,
+    pub transaction_index: TransactionIndex,
+}
+
+impl Default for TransactionLocation {
+    fn default() -> Self {
+        TransactionLocation {
+            block_hash: H256::default(),
+            block_number: 0,
+            transaction_index: 0,
+        }
+    }
+}
+
+impl rlp::Encodable for TransactionLocation {
+    fn rlp_append(&self, s: &mut RlpStream) {
+        s.begin_list(3);
+        s.append(&self.block_hash);
+        s.append(&self.block_number);
+        s.append(&self.transaction_index);
+    }
+}
+
+impl rlp::Decodable for TransactionLocation {
+    fn decode(d: &Rlp) -> Result<Self, DecoderError> {
+        if d.item_count()? != 3 {
+            return Err(DecoderError::RlpIncorrectListLen);
+        }
+        Ok(TransactionLocation {
+            block_hash: d.val_at(0)?,
+            block_number: d.val_at(1)?,
+            transaction_index: d.val_at(2)?,
+        })
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TransactionBody {
+    pub transaction: UnverifiedTransaction,
+    pub locations: Vec<TransactionLocation>,
+}
+
+impl Deref for TransactionBody {
+    type Target = UnverifiedTransaction;
+
+    fn deref(&self) -> &Self::Target {
+        &self.transaction
+    }
+}
+
+impl TransactionBody {
+
+    pub fn new(tx: UnverifiedTransaction) -> Self {
+        TransactionBody {
+            transaction: tx,
+            locations: vec![],
+        }
+    }
+
+    pub fn rlp_bytes(&self) -> Bytes {
+        let mut body_rlp = RlpStream::new_list(2);
+        body_rlp.append(&self.transaction);
+        body_rlp.append_list(&self.locations);
+        body_rlp.out()
+    }
+
+    pub fn append_location(&mut self, loc: TransactionLocation) -> Result<(),TransactionLocationError>{
+
+        match self.locations.iter().filter(|item| item.block_hash == (&loc).block_hash).count() {
+            0 => {
+                self.locations.push(loc);
+                Ok(())
+            },
+            _ => {
+                Err(TransactionLocationError::DuplicateLocation)
+            }
+        }
+    }
+}
+
+impl rlp::Decodable for TransactionBody {
+    fn decode(rlp: &Rlp) -> Result<Self, rlp::DecoderError> {
+        if rlp.as_raw().len() != rlp.payload_info()?.total() {
+            return Err(rlp::DecoderError::RlpIsTooBig);
+        }
+        if rlp.item_count()? != 2 {
+            return Err(rlp::DecoderError::RlpIncorrectListLen);
+        }
+        Ok(TransactionBody {
+            transaction: rlp.val_at(0)?,
+            locations: rlp.list_at(1)?,
+        })
+    }
+}
+
+
+
 #[cfg(test)]
 mod tests {
     use std::str::FromStr;
@@ -613,5 +718,49 @@ mod tests {
         test_vector("f867078504a817c807830290409435353535353535353535353535353535353535358201578025a052f1a9b320cab38e5da8a8f97989383aab0a49165fc91c737310e4f7e9821021a052f1a9b320cab38e5da8a8f97989383aab0a49165fc91c737310e4f7e9821021", "0xd37922162ab7cea97c97a87551ed02c9a38b7332");
         test_vector("f867088504a817c8088302e2489435353535353535353535353535353535353535358202008025a064b1702d9298fee62dfeccc57d322a463ad55ca201256d01f62b45b2e1c21c12a064b1702d9298fee62dfeccc57d322a463ad55ca201256d01f62b45b2e1c21c10", "0x9bddad43f934d313c2b79ca28a432dd2b7281029");
         test_vector("f867098504a817c809830334509435353535353535353535353535353535353535358202d98025a052f8f61201b2b11a78d6e866abc9c3db2ae8631fa656bfe5cb53668255367afba052f8f61201b2b11a78d6e866abc9c3db2ae8631fa656bfe5cb53668255367afb", "0x3c24d7329e92f84f08556ceb6df1cdb0104ca49f");
+    }
+
+    #[test]
+    fn transaction_location_test() {
+        let mut loc1 = TransactionLocation::default();
+        let block_hash = H256::from_str("40eb088232727a64c88d5e98d25e7b16ee7e9acc267c25c0088c7d1432745896").unwrap();
+        loc1.block_hash = block_hash.clone();
+        loc1.block_number = 100;
+        loc1.transaction_index = 2;
+
+        let b = loc1.rlp_bytes();
+        let loc2 = rlp::decode(b.as_slice()).expect("wrong");
+        assert_eq!(loc1,loc2);
+    }
+
+
+    #[test]
+    fn transaction_body_test() {
+        let bytes: Vec<u8> = FromHex::from_hex("f85f800182520894095e7baea6a6c7c4c2dfeb977efac326af552d870a801ba048b55bfa915ac795c431978d8a6a992b628d557da5ff759b307d495a36649353a0efffd310ac743f371de3b9f7f9cb56c0b28ad43601b4ab949f53faa07bd2c804").unwrap();
+        let t: UnverifiedTransaction = rlp::decode(&bytes).expect("decoding UnverifiedTransaction failed");
+
+        let mut loc1 = TransactionLocation::default();
+        let block_hash = H256::from_str("40eb088232727a64c88d5e98d25e7b16ee7e9acc267c25c0088c7d1432745896").unwrap();
+        loc1.block_hash = block_hash.clone();
+        loc1.block_number = 100;
+        loc1.transaction_index = 2;
+
+        let mut body = TransactionBody::new(t);
+        body.append_location(loc1);
+
+        let body_bytes = body.rlp_bytes();
+        let new_body: TransactionBody = rlp::decode(body_bytes.as_slice()).expect("decode error for transaction body");
+
+
+        assert_eq!(new_body.data, b"");
+        assert_eq!(new_body.gas, U256::from(0x5208u64));
+        assert_eq!(new_body.gas_price, U256::from(0x01u64));
+        assert_eq!(new_body.nonce, U256::from(0x00u64));
+        if let Action::Call(ref to) = new_body.action {
+            assert_eq!(*to, Address::from_str("095e7baea6a6c7c4c2dfeb977efac326af552d87").unwrap());
+        } else { panic!(); }
+        assert_eq!(new_body.value, U256::from(0x0au64));
+        assert_eq!(public_to_address(&new_body.recover_public().unwrap()), Address::from_str("0f65fe9276bc9a24ae7083ae28e2660ef72df99e").unwrap());
+        assert_eq!(new_body.chain_id(), None);
     }
 }

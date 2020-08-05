@@ -4,6 +4,7 @@ pub mod block;
 
 /// Type for block number.
 pub type BlockNumber = u64;
+pub type TransactionIndex = u64;
 
 
 use std::{fmt, error};
