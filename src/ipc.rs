@@ -6,7 +6,7 @@ use rlp::{Decodable, DecoderError, Encodable, Rlp, RlpStream};
 pub struct IpcRequest {
     pub method: String,
     pub id: u64,
-    pub params: om<u8>,
+    pub params: Vec<u8>,
 }
 
 #[derive(Default, Debug, Clone, PartialEq)]
