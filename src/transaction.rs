@@ -477,6 +477,16 @@ pub struct TransactionLocation {
     pub transaction_index: TransactionIndex,
 }
 
+impl TransactionLocation {
+    pub fn new(block_hash: H256, block_number: BlockNumber, index: TransactionIndex) -> Self {
+        TransactionLocation {
+            block_hash,
+            block_number,
+            transaction_index: index,
+        }
+    }
+}
+
 impl Default for TransactionLocation {
     fn default() -> Self {
         TransactionLocation {

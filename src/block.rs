@@ -90,7 +90,7 @@ impl BlockHashList {
 		self.0.insert(0,main_block_hash);
 	}
 
-	pub fn blockHashes(&self) -> &Vec<H256> {
+	pub fn block_hashes(&self) -> &Vec<H256> {
 		&self.0
 	}
 }
@@ -137,7 +137,7 @@ mod tests {
 		list.push(block_hash2.clone()).unwrap();
 
 		list.push_main_block_hash(block_hash3);
-		assert_eq!(list.blockHashes(),&vec![block_hash3,block_hash1,block_hash2]);
+		assert_eq!(list.block_hashes(),&vec![block_hash3,block_hash1,block_hash2]);
 	}
 
 }
