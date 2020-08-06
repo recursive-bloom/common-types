@@ -596,6 +596,16 @@ impl TransactionHashList {
     }
 }
 
+impl From<Vec<UnverifiedTransaction>> for TransactionHashList {
+    fn from(u: Vec<UnverifiedTransaction>) -> Self {
+        let mut hashes = vec![];
+        for t in &u {
+            hashes.push(t.hash())
+        }
+        TransactionHashList(hashes)
+    }
+}
+
 impl rlp::Decodable for TransactionHashList {
     fn decode(rlp: &Rlp) -> Result<Self, DecoderError> {
         if rlp.as_raw().len() != rlp.payload_info()?.total() {
@@ -812,5 +822,14 @@ mod tests {
         let tx_bytes = tx_list.rlp_bytes();
         let tx_list_temp: TransactionHashList = rlp::decode(tx_bytes.as_slice()).unwrap();
         assert_eq!(tx_list,tx_list_temp);
+    }
+
+    #[test]
+    fn transactions_list_from_test() {
+        let bytes: Vec<u8> = FromHex::from_hex("f85f800182520894095e7baea6a6c7c4c2dfeb977efac326af552d870a801ba048b55bfa915ac795c431978d8a6a992b628d557da5ff759b307d495a36649353a0efffd310ac743f371de3b9f7f9cb56c0b28ad43601b4ab949f53faa07bd2c804").unwrap();
+        let t: UnverifiedTransaction = rlp::decode(&bytes).expect("decoding UnverifiedTransaction failed");
+        let utrxs = vec![t.clone()];
+        let tx_list = TransactionHashList::from(utrxs.clone());
+        assert_eq!(tx_list.transactions(), &[t.compute_hash().hash])
     }
 }
