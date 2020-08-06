@@ -18,6 +18,14 @@ pub struct Block {
 }
 
 impl Block {
+
+	pub fn new(header: Header, transactions: Vec<UnverifiedTransaction>) -> Self {
+		Block{
+			header,
+			transactions,
+		}
+	}
+
 	/// Get the RLP-encoding of the block with the seal.
 	pub fn rlp_bytes(&self) -> Bytes {
 		let mut block_rlp = RlpStream::new_list(2);

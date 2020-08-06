@@ -569,6 +569,45 @@ impl rlp::Decodable for TransactionBody {
 }
 
 
+#[derive(Debug, Clone, PartialEq)]
+pub struct TransactionHashList(Vec<H256>);
+
+
+impl Default for TransactionHashList {
+    fn default() -> Self {
+        TransactionHashList(vec![])
+    }
+}
+
+impl TransactionHashList {
+
+    pub fn new(transactions: Vec<H256>) -> Self {
+        TransactionHashList(transactions)
+    }
+
+    pub fn rlp_bytes(&self) -> Bytes {
+        let mut list_rlp = RlpStream::new_list(1);
+        list_rlp.append_list(&self.0);
+        list_rlp.out()
+    }
+
+    pub fn transactions(&self) -> &Vec<H256> {
+        &self.0
+    }
+}
+
+impl rlp::Decodable for TransactionHashList {
+    fn decode(rlp: &Rlp) -> Result<Self, DecoderError> {
+        if rlp.as_raw().len() != rlp.payload_info()?.total() {
+            return Err(DecoderError::RlpIsTooBig);
+        }
+        if rlp.item_count()? != 1 {
+            return Err(DecoderError::RlpIncorrectListLen);
+        }
+        Ok(TransactionHashList (rlp.list_at(0)?))
+    }
+}
+
 
 #[cfg(test)]
 mod tests {
@@ -762,5 +801,16 @@ mod tests {
         assert_eq!(new_body.value, U256::from(0x0au64));
         assert_eq!(public_to_address(&new_body.recover_public().unwrap()), Address::from_str("0f65fe9276bc9a24ae7083ae28e2660ef72df99e").unwrap());
         assert_eq!(new_body.chain_id(), None);
+    }
+
+    #[test]
+    fn transactions_list_test(){
+        let tx_hash1 = H256::from_str("40eb088232727a64c88d5e98d25e7b16ee7e9acc267c25c0088c7d1432745896").unwrap();
+        let tx_hash2 = H256::from_str("40eb088232727a64c88d5e98d25e7b16ee7e9acc267c25c0088c7d1432745896").unwrap();
+        let txs = vec![tx_hash1,tx_hash2];
+        let tx_list = TransactionHashList::new(txs);
+        let tx_bytes = tx_list.rlp_bytes();
+        let tx_list_temp: TransactionHashList = rlp::decode(tx_bytes.as_slice()).unwrap();
+        assert_eq!(tx_list,tx_list_temp);
     }
 }
