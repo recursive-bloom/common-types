@@ -56,24 +56,20 @@ pub enum BlockHashListError {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct BlockHashList {
-	pub list: Vec<H256>,
-}
+pub struct BlockHashList(Vec<H256>);
 
 impl Default for BlockHashList {
 	fn default() -> Self {
-		BlockHashList{
-			list:vec![],
-		}
+		BlockHashList(vec![])
 	}
 }
 
 impl BlockHashList {
 
 	pub fn push(&mut self,block_hash: H256) -> Result<(),BlockHashListError> {
-		match self.list.iter().filter(|h| **h == block_hash).count() {
+		match self.0.iter().filter(|h| **h == block_hash).count() {
 			0 => {
-				self.list.push(block_hash);
+				self.0.push(block_hash);
 				Ok(())
 			}
 
@@ -85,13 +81,17 @@ impl BlockHashList {
 
 	pub fn rlp_bytes(&self) -> Bytes {
 		let mut list_rlp = RlpStream::new_list(1);
-		list_rlp.append_list(&self.list);
+		list_rlp.append_list(&self.0);
 		list_rlp.out()
 	}
 
 	pub fn push_main_block_hash(&mut self, main_block_hash: H256) {
-		self.list.retain(|h| h != &main_block_hash);
-		self.list.insert(0,main_block_hash);
+		self.0.retain(|h| h != &main_block_hash);
+		self.0.insert(0,main_block_hash);
+	}
+
+	pub fn blockHashes(&self) -> &Vec<H256> {
+		&self.0
 	}
 }
 
@@ -103,9 +103,7 @@ impl Decodable for BlockHashList {
 		if rlp.item_count()? != 1 {
 			return Err(DecoderError::RlpIncorrectListLen);
 		}
-		Ok(BlockHashList {
-			list: rlp.list_at(0)?,
-		})
+		Ok(BlockHashList(rlp.list_at(0)?))
 	}
 }
 
@@ -125,7 +123,7 @@ mod tests {
 
 		let list_bytes = list.rlp_bytes();
 		let list2: BlockHashList = rlp::decode(list_bytes.as_slice()).unwrap();
-		assert_eq!(list.list,list2.list);
+		assert_eq!(list,list2);
 	}
 
 	#[test]
@@ -139,7 +137,7 @@ mod tests {
 		list.push(block_hash2.clone()).unwrap();
 
 		list.push_main_block_hash(block_hash3);
-		assert_eq!(list.list,vec![block_hash3,block_hash1,block_hash2]);
+		assert_eq!(list.blockHashes(),&vec![block_hash3,block_hash1,block_hash2]);
 	}
 
 }
