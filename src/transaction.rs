@@ -542,13 +542,6 @@ impl TransactionBody {
         }
     }
 
-    pub fn rlp_bytes(&self) -> Bytes {
-        let mut body_rlp = RlpStream::new_list(2);
-        body_rlp.append(&self.transaction);
-        body_rlp.append_list(&self.locations);
-        body_rlp.out()
-    }
-
     pub fn append_location(&mut self, loc: TransactionLocation) -> Result<(),TransactionLocationError>{
 
         match self.locations.iter().filter(|item| item.block_hash == (&loc).block_hash).count() {
@@ -563,6 +556,8 @@ impl TransactionBody {
     }
 }
 
+
+
 impl rlp::Decodable for TransactionBody {
     fn decode(rlp: &Rlp) -> Result<Self, rlp::DecoderError> {
         if rlp.as_raw().len() != rlp.payload_info()?.total() {
@@ -575,6 +570,15 @@ impl rlp::Decodable for TransactionBody {
             transaction: rlp.val_at(0)?,
             locations: rlp.list_at(1)?,
         })
+    }
+}
+
+impl rlp::Encodable for TransactionBody {
+    /// Get the RLP-encoding of the block with the seal.
+    fn rlp_append(&self, s: &mut RlpStream){
+        s.begin_list(2);
+        s.append(&self.transaction);
+        s.append_list(&self.locations);
     }
 }
 
@@ -593,12 +597,6 @@ impl TransactionHashList {
 
     pub fn new(transactions: Vec<H256>) -> Self {
         TransactionHashList(transactions)
-    }
-
-    pub fn rlp_bytes(&self) -> Bytes {
-        let mut list_rlp = RlpStream::new_list(1);
-        list_rlp.append_list(&self.0);
-        list_rlp.out()
     }
 
     pub fn transactions(&self) -> &Vec<H256> {
@@ -625,6 +623,14 @@ impl rlp::Decodable for TransactionHashList {
             return Err(DecoderError::RlpIncorrectListLen);
         }
         Ok(TransactionHashList (rlp.list_at(0)?))
+    }
+}
+
+impl rlp::Encodable for TransactionHashList {
+    /// Get the RLP-encoding of the block with the seal.
+    fn rlp_append(&self, s: &mut RlpStream){
+        s.begin_list(1);
+        s.append_list(&self.0);
     }
 }
 

@@ -4,7 +4,7 @@ use crate::{
 	transaction::{UnverifiedTransaction},
 };
 use parity_bytes::Bytes;
-use rlp::{self,Rlp, RlpStream, Decodable, DecoderError};
+use rlp::{self, Rlp, RlpStream, Decodable, DecoderError, Encodable};
 use ethereum_types::H256;
 
 
@@ -25,13 +25,14 @@ impl Block {
 			transactions,
 		}
 	}
+}
 
+impl Encodable for Block {
 	/// Get the RLP-encoding of the block with the seal.
-	pub fn rlp_bytes(&self) -> Bytes {
-		let mut block_rlp = RlpStream::new_list(2);
-		block_rlp.append(&self.header);
-		block_rlp.append_list(&self.transactions);
-		block_rlp.out()
+	fn rlp_append(&self, s: &mut RlpStream){
+		s.begin_list(2);
+		s.append(&self.header);
+		s.append_list(&self.transactions);
 	}
 }
 
@@ -79,12 +80,6 @@ impl BlockHashList {
 		}
 	}
 
-	pub fn rlp_bytes(&self) -> Bytes {
-		let mut list_rlp = RlpStream::new_list(1);
-		list_rlp.append_list(&self.0);
-		list_rlp.out()
-	}
-
 	pub fn push_main_block_hash(&mut self, main_block_hash: H256) {
 		self.0.retain(|h| h != &main_block_hash);
 		self.0.insert(0,main_block_hash);
@@ -92,6 +87,14 @@ impl BlockHashList {
 
 	pub fn block_hashes(&self) -> &Vec<H256> {
 		&self.0
+	}
+}
+
+impl Encodable for BlockHashList {
+	/// Get the RLP-encoding of the block with the seal.
+	fn rlp_append(&self, s: &mut RlpStream){
+		s.begin_list(1);
+		s.append_list(&self.0);
 	}
 }
 
