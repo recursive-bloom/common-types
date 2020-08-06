@@ -1,3 +1,4 @@
+mod ipc;
 pub mod header;
 pub mod transaction;
 pub mod block;

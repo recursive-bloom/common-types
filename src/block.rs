@@ -4,7 +4,7 @@ use crate::{
 	transaction::{UnverifiedTransaction},
 };
 use parity_bytes::Bytes;
-use rlp::{self, Rlp, RlpStream, Decodable, DecoderError, Encodable};
+use rlp::{Rlp, RlpStream, Decodable, DecoderError, Encodable};
 use ethereum_types::H256;
 
 
