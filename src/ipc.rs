@@ -2,6 +2,29 @@
 use hex_literal::hex;
 use rlp::{Decodable, DecoderError, Encodable, Rlp, RlpStream};
 
+#[derive(Default, Debug, Clone, PartialEq)]
+pub enum MethodName {
+    CreateHeader,
+
+
+    Unknown,
+}
+
+impl<'a> From<&'a str> for MethodName {
+    fn from(s: &'a str) -> Self {
+        match s {
+            "CreateHeader" => {
+                MethodName::CreateHeader
+            }
+
+            _ => {
+                MethodName::Unknown
+            }
+
+        }
+    }
+}
+
 /// RLP-Encode( method(string), id(number), param(rlp-encoded-list) );
 #[derive(Default, Debug, Clone, PartialEq)]
 pub struct IpcRequest {
