@@ -21,7 +21,7 @@ impl Encodable for IpcRequest {
         s.begin_list(3);
         s.append(&self.method);
         s.append(&self.id);
-        s.append_list(&self.params);
+        s.append(&self.params);
     }
 }
 
@@ -36,7 +36,7 @@ impl Decodable for IpcRequest {
         Ok(IpcRequest {
             method: rlp.val_at(0)?,
             id: rlp.val_at(1)?,
-            params: rlp.list_at(2)?,
+            params: rlp.val_at(2)?,
         })
     }
 }
@@ -64,6 +64,40 @@ impl Decodable for IpcReply {
     }
 }
 
+
+
+#[test]
+fn test_match_request() {
+
+    let mut stream = RlpStream::new_list(1);
+    stream.append(&15u32);
+    let out = stream.out();
+
+    let rlp = Rlp::new(&out);
+    println!("{}", rlp);
+    // ["0x636174", "0x646f67"]
+    let ipc_request = IpcRequest {
+        method: "LatestBlocks".to_string(),
+        id: 123,
+        params: out,
+    };
+
+
+    match ipc_request.method.as_str() {
+        "LatestBlocks" => {}, // get_latest_blocks
+        "BlocksAfterN" => {}, // get_blocks_after_number
+        "BlocksN" => {},
+        "AccountsInfo" => {}, // get_accounts_info
+        "SendToTxPool" => {},
+        _ => {}
+    };
+}
+
+
+
+
+
+
 #[test]
 fn test_req() {
     use ethereum_types::{H256, H160, Address, U256, BigEndianHash};
@@ -78,7 +112,7 @@ fn test_req() {
         id: 123,
         params: data.to_vec(),
     };
-
+    // rlp::encode();
     let req_bytes = ipc_request.rlp_bytes();
     println!("ipc_request hex-string: {}", hex::encode(req_bytes));
     let recovered_request : IpcRequest = rlp::decode(&ipc_request.rlp_bytes()).unwrap();
