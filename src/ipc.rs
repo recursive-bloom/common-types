@@ -103,10 +103,10 @@ impl CreateHeaderReq {
 #[derive(Default, Debug, Clone, PartialEq,RlpEncodable, RlpDecodable)]
 pub struct CreateHeaderResp(Header);
 
-/// method: LatestBlockReq, Request
+/// method: LatestBlock, Request
 #[derive(Default, Debug, Clone, PartialEq,RlpEncodable, RlpDecodable)]
 pub struct LatestBlocksReq(u64);
-/// method: LatestBlockReq, Response
+/// method: LatestBlock, Response
 #[derive(Default, Debug, Clone, PartialEq,RlpEncodable, RlpDecodable)]
 pub struct LatestBlocksResp(Vec<Header>);
 
