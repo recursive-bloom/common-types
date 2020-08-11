@@ -337,6 +337,122 @@ mod tests {
         assert_eq!(resp1.0,true);
 
     }
+
+
+    #[test]
+    fn main1() {
+        use zmq::{Context, DEALER, ROUTER, DONTWAIT};
+        use std::time::Duration;
+        use hex_literal::hex;
+        println!("xxxx");
+        let context = Context::new();
+        let socket = context.socket(DEALER).unwrap();
+        socket.set_identity( &hex!("1234567890").to_vec() ).unwrap();
+        println!("yyy");
+
+        socket.connect("tcp://192.168.1.49:7050").unwrap();
+        println!("zzz");
+
+        socket.send("hello", 0).unwrap();
+        println!("aaa");
+        let mut rmp = socket.recv_multipart(DONTWAIT).unwrap();
+        println!("client thread, received from server, #received_parts: {:?}", rmp);
+    }
+
+    #[test]
+    fn main2() {
+        use zmq::{Context, DEALER, ROUTER, DONTWAIT};
+        use std::time::Duration;
+        use hex_literal::hex;
+        use rlp::{Decodable, DecoderError, Encodable, Rlp, RlpStream};
+
+        let tx1 = "f864808504a817c800825208943535353535353535353535353535353535353535808025a0044852b2a670ade5407e78fb2863c51de9fcb96542a07186fe3aeda6bb8a116da0044852b2a670ade5407e78fb2863c51de9fcb96542a07186fe3aeda6bb8a116d";
+        let tx2 = "f864808504a817c800825208943535353535353535353535353535353535353535808025a0044852b2a670ade5407e78fb2863c51de9fcb96542a07186fe3aeda6bb8a116da0044852b2a670ade5407e78fb2863c51de9fcb96542a07186fe3aeda6bb8a116d";
+        let tx3 = "f864018504a817c80182a410943535353535353535353535353535353535353535018025a0489efdaa54c0f20c7adf612882df0950f5a951637e0307cdcb4c672f298b8bcaa0489efdaa54c0f20c7adf612882df0950f5a951637e0307cdcb4c672f298b8bc6";
+        let tx4 = "f864028504a817c80282f618943535353535353535353535353535353535353535088025a02d7c5bef027816a800da1736444fb58a807ef4c9603b7848673f7e3a68eb14a5a02d7c5bef027816a800da1736444fb58a807ef4c9603b7848673f7e3a68eb14a5";
+        let tx5 = "f865038504a817c803830148209435353535353535353535353535353535353535351b8025a02a80e1ef1d7842f27f2e6be0972bb708b9a135c38860dbe73c27c3486c34f4e0a02a80e1ef1d7842f27f2e6be0972bb708b9a135c38860dbe73c27c3486c34f4de";
+        let tx6 = "f865048504a817c80483019a28943535353535353535353535353535353535353535408025a013600b294191fc92924bb3ce4b969c1e7e2bab8f4c93c3fc6d0a51733df3c063a013600b294191fc92924bb3ce4b969c1e7e2bab8f4c93c3fc6d0a51733df3c060";
+        let tx7 = "f865058504a817c8058301ec309435353535353535353535353535353535353535357d8025a04eebf77a833b30520287ddd9478ff51abbdffa30aa90a8d655dba0e8a79ce0c1a04eebf77a833b30520287ddd9478ff51abbdffa30aa90a8d655dba0e8a79ce0c1";
+        let tx8 = "f866068504a817c80683023e3894353535353535353535353535353535353535353581d88025a06455bf8ea6e7463a1046a0b52804526e119b4bf5136279614e0b1e8e296a4e2fa06455bf8ea6e7463a1046a0b52804526e119b4bf5136279614e0b1e8e296a4e2d";
+        let tx9 = "f867078504a817c807830290409435353535353535353535353535353535353535358201578025a052f1a9b320cab38e5da8a8f97989383aab0a49165fc91c737310e4f7e9821021a052f1a9b320cab38e5da8a8f97989383aab0a49165fc91c737310e4f7e9821021";
+        let txa = "f867088504a817c8088302e2489435353535353535353535353535353535353535358202008025a064b1702d9298fee62dfeccc57d322a463ad55ca201256d01f62b45b2e1c21c12a064b1702d9298fee62dfeccc57d322a463ad55ca201256d01f62b45b2e1c21c10";
+        let txb = "f867098504a817c809830334509435353535353535353535353535353535353535358202d98025a052f8f61201b2b11a78d6e866abc9c3db2ae8631fa656bfe5cb53668255367afba052f8f61201b2b11a78d6e866abc9c3db2ae8631fa656bfe5cb53668255367afb";
+
+        let mut stream = RlpStream::new_list(2);
+        //stream.append(&hex::decode(tx1).unwrap()).append(&hex::decode(tx2).unwrap());
+        stream.append(&hex::decode(tx1).unwrap()).append(&hex::decode(tx2).unwrap());
+        let out = stream.out();
+
+        let ipc_request = IpcRequest {
+            method: "SendToTxPool".to_string(),
+            id: 123,
+            params: out,
+        };
+        let recovered_request : IpcRequest = rlp::decode(&ipc_request.rlp_bytes()).unwrap();
+        println!("recovered_request: {:x?}", recovered_request);
+
+        // let x : Vec<UnverifiedTransaction> = rlp::decode_list(&ipc_request.params);
+        let x : Vec<Vec<u8>> = rlp::decode_list(&ipc_request.params);
+        let y : UnverifiedTransaction = rlp::decode(&x[0]).unwrap();
+        println!("####{:?}", y);
+    }
+
+
+    #[test]
+    fn main3() {
+        use zmq::{Context, DEALER, ROUTER, DONTWAIT};
+        use std::time::Duration;
+        use hex_literal::hex;
+        use rlp::{Decodable, DecoderError, Encodable, Rlp, RlpStream};
+
+        let tx1 = "f864808504a817c800825208943535353535353535353535353535353535353535808025a0044852b2a670ade5407e78fb2863c51de9fcb96542a07186fe3aeda6bb8a116da0044852b2a670ade5407e78fb2863c51de9fcb96542a07186fe3aeda6bb8a116d";
+        let tx2 = "f864808504a817c800825208943535353535353535353535353535353535353535808025a0044852b2a670ade5407e78fb2863c51de9fcb96542a07186fe3aeda6bb8a116da0044852b2a670ade5407e78fb2863c51de9fcb96542a07186fe3aeda6bb8a116d";
+        let tx3 = "f864018504a817c80182a410943535353535353535353535353535353535353535018025a0489efdaa54c0f20c7adf612882df0950f5a951637e0307cdcb4c672f298b8bcaa0489efdaa54c0f20c7adf612882df0950f5a951637e0307cdcb4c672f298b8bc6";
+        let tx4 = "f864028504a817c80282f618943535353535353535353535353535353535353535088025a02d7c5bef027816a800da1736444fb58a807ef4c9603b7848673f7e3a68eb14a5a02d7c5bef027816a800da1736444fb58a807ef4c9603b7848673f7e3a68eb14a5";
+        let tx5 = "f865038504a817c803830148209435353535353535353535353535353535353535351b8025a02a80e1ef1d7842f27f2e6be0972bb708b9a135c38860dbe73c27c3486c34f4e0a02a80e1ef1d7842f27f2e6be0972bb708b9a135c38860dbe73c27c3486c34f4de";
+        let tx6 = "f865048504a817c80483019a28943535353535353535353535353535353535353535408025a013600b294191fc92924bb3ce4b969c1e7e2bab8f4c93c3fc6d0a51733df3c063a013600b294191fc92924bb3ce4b969c1e7e2bab8f4c93c3fc6d0a51733df3c060";
+        let tx7 = "f865058504a817c8058301ec309435353535353535353535353535353535353535357d8025a04eebf77a833b30520287ddd9478ff51abbdffa30aa90a8d655dba0e8a79ce0c1a04eebf77a833b30520287ddd9478ff51abbdffa30aa90a8d655dba0e8a79ce0c1";
+        let tx8 = "f866068504a817c80683023e3894353535353535353535353535353535353535353581d88025a06455bf8ea6e7463a1046a0b52804526e119b4bf5136279614e0b1e8e296a4e2fa06455bf8ea6e7463a1046a0b52804526e119b4bf5136279614e0b1e8e296a4e2d";
+        let tx9 = "f867078504a817c807830290409435353535353535353535353535353535353535358201578025a052f1a9b320cab38e5da8a8f97989383aab0a49165fc91c737310e4f7e9821021a052f1a9b320cab38e5da8a8f97989383aab0a49165fc91c737310e4f7e9821021";
+        let txa = "f867088504a817c8088302e2489435353535353535353535353535353535353535358202008025a064b1702d9298fee62dfeccc57d322a463ad55ca201256d01f62b45b2e1c21c12a064b1702d9298fee62dfeccc57d322a463ad55ca201256d01f62b45b2e1c21c10";
+        let txb = "f867098504a817c809830334509435353535353535353535353535353535353535358202d98025a052f8f61201b2b11a78d6e866abc9c3db2ae8631fa656bfe5cb53668255367afba052f8f61201b2b11a78d6e866abc9c3db2ae8631fa656bfe5cb53668255367afb";
+        let txc = "f8ad830dd98a8502540be40083026739947c2af3a86b4bf47e6ee63ad9bde7b3b0ba7f95da80b844a9059cbb000000000000000000000000b34938746d316e995aa81f9b3f94419a0a41e14300000000000000000000000000000000000000000000026faff2dfe5c524000025a0167bf6ce1f7ecee1e5a414e3622baa14daf6caaf90f498b4fb94b1a91bc79491a0362191d3956065a0e14276dd4810b523e93a786091d27388a2b00b6955f93161";
+
+        let foo : UnverifiedTransaction = rlp::decode(&hex::decode(txa).unwrap()).unwrap();
+        let bar : UnverifiedTransaction = rlp::decode(&hex::decode(txc).unwrap()).unwrap();
+        let fb_vec = vec![foo, bar];
+        let fb_bytes = rlp::encode_list(&fb_vec);
+
+        let ipc_request = IpcRequest {
+            method: "SendToTxPool".to_string(),
+            id: 666,
+            params: fb_bytes,
+        };
+        let recovered_request : IpcRequest = rlp::decode(&ipc_request.rlp_bytes()).unwrap();
+        println!("Recovered request: {:x?}", recovered_request);
+
+        //let socket = Context::new().socket(DEALER).unwrap();
+        let context = Context::new();
+        let socket = context.socket(DEALER).unwrap();
+        socket.set_identity( &hex!("1234").to_vec() ).unwrap();
+        socket.connect("tcp://192.168.1.49:7050").unwrap();
+        socket.send(ipc_request.rlp_bytes(), 0).unwrap();
+        std::thread::sleep(std::time::Duration::from_secs(3));
+        let result_rmp = socket.recv_multipart(DONTWAIT);
+        if let Ok(mut rmp) = result_rmp {
+            println!("Client received from server, Received multiparts: {:?}", rmp);
+            let foo : IpcReply = rlp::decode(&rmp.pop().unwrap()).unwrap();
+            println!("Client received from server, IpcReply decoded: {:?}", foo);
+            let bar : String = rlp::decode(&foo.result).unwrap();
+            println!("Client received from server,  Result decoded: {:?}", bar);
+        } else {
+            println!("Error: Reply Timeout");
+        }
+
+    }
+
+
+
 }
 
 
