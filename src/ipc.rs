@@ -117,6 +117,13 @@ pub struct ApplyBlockReq(pub Header,pub Vec<UnverifiedTransaction>);
 #[derive(Default, Debug, Clone, PartialEq,RlpEncodable, RlpDecodable)]
 pub struct ApplyBlockResp(pub bool);
 
+/// method: AccountInfo, Request
+#[derive(Default, Debug, Clone, PartialEq,RlpEncodable, RlpDecodable)]
+pub struct AccountInfoReq(pub Address);
+/// method: ApplyBlock, Response
+#[derive(Default, Debug, Clone, PartialEq,RlpEncodable, RlpDecodable)]
+pub struct AccountInfoResp(pub U256, pub U256);
+
 
 #[cfg(test)]
 mod tests {
