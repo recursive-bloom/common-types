@@ -101,21 +101,21 @@ impl CreateHeaderReq {
 
 /// method: CreateHeader, Response
 #[derive(Default, Debug, Clone, PartialEq,RlpEncodable, RlpDecodable)]
-pub struct CreateHeaderResp(Header);
+pub struct CreateHeaderResp(pub Header);
 
 /// method: LatestBlocks, Request
 #[derive(Default, Debug, Clone, PartialEq,RlpEncodable, RlpDecodable)]
-pub struct LatestBlocksReq(u64);
+pub struct LatestBlocksReq(pub u64);
 /// method: LatestBlocks, Response
 #[derive(Default, Debug, Clone, PartialEq,RlpEncodable, RlpDecodable)]
-pub struct LatestBlocksResp(Vec<Header>);
+pub struct LatestBlocksResp(pub Vec<Header>);
 
 /// method: ApplyBlock, Request
 #[derive(Default, Debug, Clone, PartialEq,RlpEncodable, RlpDecodable)]
-pub struct ApplyBlockReq(Header,Vec<UnverifiedTransaction>);
+pub struct ApplyBlockReq(pub Header,pub Vec<UnverifiedTransaction>);
 /// method: ApplyBlock, Response
 #[derive(Default, Debug, Clone, PartialEq,RlpEncodable, RlpDecodable)]
-pub struct ApplyBlockResp(bool);
+pub struct ApplyBlockResp(pub bool);
 
 
 #[cfg(test)]
