@@ -70,7 +70,7 @@ impl Decodable for IpcReply {
     }
 }
 
-
+/// method: CreateHeader, Request
 #[derive(Default, Debug, Clone, PartialEq,RlpEncodable, RlpDecodable)]
 pub struct CreateHeaderReq {
     pub parent_block_hash: H256,
@@ -98,17 +98,22 @@ impl CreateHeaderReq {
         }
     }
 }
+
+/// method: CreateHeader, Response
 #[derive(Default, Debug, Clone, PartialEq,RlpEncodable, RlpDecodable)]
 pub struct CreateHeaderResp(Header);
 
+/// method: LatestBlockReq, Request
 #[derive(Default, Debug, Clone, PartialEq,RlpEncodable, RlpDecodable)]
 pub struct LatestBlocksReq(u64);
+/// method: LatestBlockReq, Response
 #[derive(Default, Debug, Clone, PartialEq,RlpEncodable, RlpDecodable)]
 pub struct LatestBlocksResp(Vec<Header>);
 
-
+/// method: ApplyBlock, Request
 #[derive(Default, Debug, Clone, PartialEq,RlpEncodable, RlpDecodable)]
 pub struct ApplyBlockReq(Header,Vec<UnverifiedTransaction>);
+/// method: ApplyBlock, Response
 #[derive(Default, Debug, Clone, PartialEq,RlpEncodable, RlpDecodable)]
 pub struct ApplyBlockResp(bool);
 
