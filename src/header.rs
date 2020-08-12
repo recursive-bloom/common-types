@@ -4,6 +4,7 @@ use ethereum_types::{H256, U256, Address};
 use parity_bytes::Bytes;
 use keccak_hash::{KECCAK_NULL_RLP, keccak};
 use rlp::{Rlp, RlpStream, Encodable, DecoderError, Decodable};
+use std::str::FromStr;
 
 
 #[derive(Debug, Clone, Eq)]
@@ -82,13 +83,14 @@ impl Default for Header {
 
 impl Header {
     pub fn genesis() -> Self {
+        let state_root = H256::from_str("0x9e47b04d8f429cefe988b01dc7ee2512fa1291cf32af081f9f02eefae2822b38").unwrap();
         Header {
             parent_hash: H256::zero(),
             timestamp: 0,
             number: 0,
             author: Address::zero(),
 
-            transactions_root: KECCAK_NULL_RLP,
+            transactions_root: state_root,
             extra_data: vec![],
 
             state_root: KECCAK_NULL_RLP,
