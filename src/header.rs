@@ -83,7 +83,7 @@ impl Default for Header {
 
 impl Header {
     pub fn genesis() -> Self {
-        let state_root = H256::from_str("0x9e47b04d8f429cefe988b01dc7ee2512fa1291cf32af081f9f02eefae2822b38").unwrap();
+        let state_root = H256::from_str("0xf93642cf9e62f5962e810ca1cedbc6a89f8809e51de88a11e66134ab42cc183f").unwrap();
         Header {
             parent_hash: H256::zero(),
             timestamp: 0,
