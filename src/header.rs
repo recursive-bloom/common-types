@@ -90,10 +90,10 @@ impl Header {
             number: 0,
             author: Address::zero(),
 
-            transactions_root: state_root,
+            transactions_root: KECCAK_NULL_RLP,
             extra_data: vec![],
 
-            state_root: KECCAK_NULL_RLP,
+            state_root,
             gas_used: U256::default(),
             gas_limit: U256::default(),
 
