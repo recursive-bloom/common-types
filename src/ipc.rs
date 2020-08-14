@@ -459,6 +459,49 @@ mod tests {
     }
 
 
+    #[test]
+    fn main4() {
+        use zmq::{Context, DEALER, ROUTER, DONTWAIT};
+        use std::time::Duration;
+        use hex_literal::hex;
+        use rlp::{Decodable, DecoderError, Encodable, Rlp, RlpStream};
+
+        let txfoo = "f86e808227108252d094fff7e25dff2aa60f61f9d98130c8646a01f3164989055de6a779bbac00008455aa66cc25a0d42ff575cc734cabc779536c97160592d46c3518583f55823858b49a226d5a24a054b1c00c57421428f256d765b1d1e9739a6343d82e4a7800591338223d238e3d";
+        let txbar = "f86a018227108252d09400cf3711cbd3a1512570639280758118ba0b2bcb8904563918244f4000008025a0b387e98ea78f840f04c6298db3322cc2db192a3fe2d6b0d267ef504ace3e566ea07101dcba98875d024d3a3f266465220205c8e3c4364e3386f642c8c562d07ddf";
+
+        let foo : UnverifiedTransaction = rlp::decode(&hex::decode(txfoo).unwrap()).unwrap();
+        let bar : UnverifiedTransaction = rlp::decode(&hex::decode(txbar).unwrap()).unwrap();
+        let foobar_vec = vec![foo, bar];
+        let foobar_bytes = rlp::encode_list(&foobar_vec);
+
+        let ipc_request = IpcRequest {
+            method: "SendToTxPool".to_string(),
+            id: 666,
+            params: foobar_bytes,
+        };
+        let recovered_request : IpcRequest = rlp::decode(&ipc_request.rlp_bytes()).unwrap();
+        println!("Recovered request: {:x?}", recovered_request);
+
+        //let socket = Context::new().socket(DEALER).unwrap();
+        let context = Context::new();
+        let socket = context.socket(DEALER).unwrap();
+        socket.set_identity( &hex!("1234").to_vec() ).unwrap();
+        socket.connect("tcp://192.168.1.118:7050").unwrap();
+        socket.send(ipc_request.rlp_bytes(), 0).unwrap();
+        std::thread::sleep(std::time::Duration::from_secs(2));
+        let result_rmp = socket.recv_multipart(DONTWAIT);
+        if let Ok(mut rmp) = result_rmp {
+            println!("Client received from server, Received multiparts: {:?}", rmp);
+            let foo : IpcReply = rlp::decode(&rmp.pop().unwrap()).unwrap();
+            println!("Client received from server, IpcReply decoded: {:?}", foo);
+            let bar : String = rlp::decode(&foo.result).unwrap();
+            println!("Client received from server,  Result decoded: {:?}", bar);
+        } else {
+            println!("Error: Reply Timeout");
+        }
+
+    }
+
 
 }
 
