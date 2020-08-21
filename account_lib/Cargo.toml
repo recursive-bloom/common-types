@@ -1,0 +1,19 @@
+[package]
+name = "account_lib"
+version = "0.1.0"
+authors = ["tom_glb <gooMorning_glb@wust.csn.cn>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+serde = "1.0"
+serde_derive = "1.0"
+serde_json = "1.0"
+tiny-keccak = { version = "2.0", features = ["keccak"] }
+secp256k1 = {version = "0.17", features = ["recovery"] }
+rlp = "0.4"
+ethereum-types = "0.9"
+num-traits = "0.2"
+hex = "0.3.1"
+web3 = { version = "0.11.0", default-features = false, features = ["http"] }
