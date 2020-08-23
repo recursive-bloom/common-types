@@ -75,13 +75,15 @@ fn main() {
 
     use rand::{thread_rng, Rng};
     let mut rng = thread_rng();
-    let mut x: usize = 0;
-    let mut y : usize = 0;
+    let mut x: usize;
+    let mut y : usize;
     let context = Context::new();
     let socket = context.socket(DEALER).unwrap();
     socket.set_identity( &hex!("1234").to_vec() ).unwrap();
     socket.connect("tcp://192.168.1.118:7050").unwrap();
     loop {
+        x = 0;
+        y = 0;
         while (x == y) {
             x = rng.gen_range(0, 10);
             y = rng.gen_range(0, 10);
