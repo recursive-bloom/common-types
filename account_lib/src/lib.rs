@@ -21,6 +21,7 @@ use tiny_keccak::{
 use hex;
 use web3;
 
+#[derive(Debug, Default, Clone, PartialEq, Deserialize, Serialize)]
 pub struct Account{
     pub address:String,
     pub secret:String,
@@ -124,7 +125,7 @@ pub struct EcdsaSig {
     s: Vec<u8>,
 }
 
-pub fn pre_sign_tx<'a>(sender:&'a mut Account,receiver:&'a mut Account) ->String{
+pub fn pre_sign_tx<'a>(sender:&'a mut Account, receiver : &Account) ->String{
     let add= sender.nonce.parse::<i32>().unwrap()+1;
     sender.nonce=add.to_string();
     sign_tx(&sender.nonce.to_string(),
