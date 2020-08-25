@@ -1,4 +1,4 @@
-extern crate account_lib;
+//extern crate account_lib;
 use hex_literal::hex;
 use rlp::{Decodable, DecoderError, Encodable, Rlp, RlpStream};
 use ethereum_types::{H256,U256,Address};
@@ -7,6 +7,9 @@ use rlp_derive::{RlpEncodable, RlpDecodable};
 
 use crate::transaction::{UnverifiedTransaction};
 use crate::header::Header;
+use log::{debug, error};
+use zmq::Socket;
+
 
 /// RLP-Encode( method(string), id(number), param(rlp-encoded-list) );
 #[derive(Default, Debug, Clone, PartialEq)]
@@ -125,6 +128,32 @@ pub struct AccountInfoReq(pub Address);
 pub struct AccountInfoResp(pub U256, pub U256);
 
 
+pub fn query_account_info(socket: &Socket, account: &Address) -> (U256, U256) {
+    let request = IpcRequest {
+        method: "AccountInfo".into(),
+        id: 1,
+        params: rlp::encode(&AccountInfoReq(*account)),
+    };
+
+    let reply = request_chain(socket, request);
+    let res: AccountInfoResp = rlp::decode(&reply.result).unwrap();
+
+    let (nonce, balance) = (res.0, res.1);
+    debug!("query accout info: {}, {}, {}", account, nonce, balance);
+    (nonce, balance)
+}
+
+
+pub fn request_chain(socket: &Socket, request: IpcRequest) -> IpcReply {
+    socket.send(rlp::encode(&request), 0).unwrap();
+    let mut received_parts = socket.recv_multipart(0).unwrap();
+    let msg_bytes = received_parts.pop().unwrap();
+    rlp::decode(&msg_bytes).unwrap()
+}
+
+
+
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -133,7 +162,7 @@ mod tests {
     use parity_crypto::publickey::{Signature, Secret, Public, recover, public_to_address};
     use std::str::FromStr;
     use rustc_hex::FromHex;
-    use super::account_lib::pre_sign_tx;
+    use account_lib::pre_sign_tx;
 
 
     #[test]
