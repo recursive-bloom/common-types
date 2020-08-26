@@ -4,31 +4,29 @@ use common_types::ipc::{IpcRequest, IpcReply, query_account_info};
 use common_types::transaction::{UnverifiedTransaction};
 use account_lib::Account;
 use account_lib::pre_sign_tx;
-
+use zmq::{Socket, Context, DEALER, ROUTER, DONTWAIT};
+use std::time::Duration;
+use hex_literal::hex;
+use rlp::{Decodable, DecoderError, Encodable, Rlp, RlpStream};
 
 fn main() {
 
-    use zmq::{Context, DEALER, ROUTER, DONTWAIT};
-    use std::time::Duration;
-    use hex_literal::hex;
-    use rlp::{Decodable, DecoderError, Encodable, Rlp, RlpStream};
-
     let a0 = Account{
-        address:"81da5eef9cbe6ccbcbe43a26756a0cac4e0930c3".to_string(),
-        secret:"007b475108be23ad5005ac3e53f8aac3d828d6538cc6e004605d0903644fd058".to_string(),
-        public:"11759748a63fe811c67d15fb03649e1e8d8a90c198ebcc3eecf21064ba535e03912ef2e774fd61f5d5b3d81070c52efc977ff6ba891af27d2cdf31af914212e0".to_string(),
+        address:"26d1ec50b4e62c1d1a40d16e7cacc6a6580757d5".to_string(),
+        secret:"17d08f5fe8c77af811caa0c9a187e668ce3b74a99acc3f6d976f075fa8e0be55".to_string(),
+        public:"689268c0ff57a20cd299fa60d3fb374862aff565b20b5f1767906a99e6e09f3ff04ca2b2a5cd22f62941db103c0356df1a8ed20ce322cab2483db67685afd124".to_string(),
         nonce:"0".to_string(),
     };
     let a1 = Account{
-        address:"b6c37e040893fe6b4829f525316c88f816798b9b".to_string(),
-        secret:"007b475108be23ad5005ac3e53f8aac3d828d6538cc6e004605d0903644fd058".to_string(),
-        public:"11759748a63fe811c67d15fb03649e1e8d8a90c198ebcc3eecf21064ba535e03912ef2e774fd61f5d5b3d81070c52efc977ff6ba891af27d2cdf31af914212e0".to_string(),
+        address:"fff7e25dff2aa60f61f9d98130c8646a01f31649".to_string(),
+        secret:"2075b1d9c124ea673de7273758ed6de14802a9da8a73ceb74533d7c312ff6acd".to_string(),
+        public:"48dbce4508566a05509980a5dd1335599fcdac6f9858ba67018cecb9f09b8c4066dc4c18ae2722112fd4d9ac36d626793fffffb26071dfeb0c2300df994bd173".to_string(),
         nonce:"0".to_string(),
     };
     let a2 = Account{
-        address:"4e453da8e9344049daafb4c7c57eb99982916974".to_string(),
-        secret:"4d21bc3885f597bb3dd2c5c690c6dd461a7807bad4d41bc949f7eb3c2b0d08c6".to_string(),
-        public:"85b15a424addee8caf4ebbe4a70b61759804c75c54922886b472a2eedefa3db7e1a948e11db6cb68882c3c7de163177560d2175ceccd9b37381d188d975403fa".to_string(),
+        address:"00cf3711cbd3a1512570639280758118ba0b2bcb".to_string(),
+        secret:"001ce488d50d2f7579dc190c4655f32918d505cee3de63bddc7101bc91c0c2f0".to_string(),
+        public:"4e19a5fdae82596e1485c69b687c9cc52b5078e5b0668ef3ce8543cd90e712cb00df822489bc1f1dcb3623538a54476c7b3def44e1a51dc174e86448b63f42d0".to_string(),
         nonce:"0".to_string(),
     };
     let a3 = Account{
@@ -80,10 +78,12 @@ fn main() {
     let mut rng = thread_rng();
     let mut x: usize;
     let mut y : usize;
+    let mut z : usize;
     let context = Context::new();
     let socket = context.socket(DEALER).unwrap();
     socket.set_identity( &hex!("1234").to_vec() ).unwrap();
-    socket.connect("tcp://192.168.1.118:7050").unwrap();
+    socket.connect("tcp://127.0.0.1:7050").unwrap();
+    let mut count : u128 = 0;
     loop {
         x = 0;
         y = 0;
@@ -91,43 +91,52 @@ fn main() {
             x = rng.gen_range(0, 10);
             y = rng.gen_range(0, 10);
         }
-        println!("Random: {}, {}", x, y);
+        z = (count % 10 + 1) as usize;
+        count += 1;
+        println!("random x and y : {}, {}; z : {}", x, y, z);
 
         let receiver = &accounts[y].clone();
-        let sender = &mut accounts[x];
+        let sender = &mut accounts[x]; // TODO query_sender_nonce(accounts[x].address) and then set
         let tx = pre_sign_tx(sender, receiver);
+        send_to_txpool(&socket, tx.as_str(), 3);
 
-        let foo : UnverifiedTransaction = rlp::decode(&hex::decode(tx.as_str()).unwrap()).unwrap();
-        println!("{:?}", foo);
-        let foobar_vec = vec![foo];
-        let foobar_bytes = rlp::encode_list(&foobar_vec);
-
-        let ipc_request = IpcRequest {
-            method: "SendToTxPool".to_string(),
-            id: 666,
-            params: foobar_bytes,
-        };
-        let recovered_request : IpcRequest = rlp::decode(&ipc_request.rlp_bytes()).unwrap();
-        println!("Recovered request: {:x?}", recovered_request);
-
-        // let socket = Context::new().socket(DEALER).unwrap();
-        // let context = Context::new();
-        // let socket = context.socket(DEALER).unwrap();
-        // socket.set_identity( &hex!("1234").to_vec() ).unwrap();
-        // socket.connect("tcp://192.168.1.118:7050").unwrap();
-        socket.send(ipc_request.rlp_bytes(), 0).unwrap();
-        std::thread::sleep(std::time::Duration::from_secs(2));
-        let result_rmp = socket.recv_multipart(DONTWAIT);
-        if let Ok(mut rmp) = result_rmp {
-            println!("Client received from server, Received multiparts: {:?}", rmp);
-            let foo : IpcReply = rlp::decode(&rmp.pop().unwrap()).unwrap();
-            println!("Client received from server, IpcReply decoded: {:?}", foo);
-            let bar : String = rlp::decode(&foo.result).unwrap();
-            println!("Client received from server,  Result decoded: {:?}", bar);
-        } else {
-            println!("Error: Reply Timeout");
-        }
+        let receiver = &accounts[z].clone();
+        let sender = &mut accounts[0];   // TODO query_sender_nonce(accounts[0].address) and then set
+        let tx = pre_sign_tx(sender, receiver);
+        send_to_txpool(&socket, tx.as_str(), 3);
     }
-
-
 }
+
+fn send_to_txpool(socket : &Socket, tx : &str, seconds : u64) {
+    let foo : UnverifiedTransaction = rlp::decode(&hex::decode(tx).unwrap()).unwrap();
+    println!("{:?}", foo);
+    let foobar_vec = vec![foo];
+    let foobar_bytes = rlp::encode_list(&foobar_vec);
+
+    let ipc_request = IpcRequest {
+        method: "SendToTxPool".to_string(),
+        id: 666,
+        params: foobar_bytes,
+    };
+    let recovered_request : IpcRequest = rlp::decode(&ipc_request.rlp_bytes()).unwrap();
+    println!("Recovered request: {:x?}", recovered_request);
+
+    socket.send(ipc_request.rlp_bytes(), 0).unwrap();
+    std::thread::sleep(std::time::Duration::from_secs(seconds));
+
+    let result_rmp = socket.recv_multipart(DONTWAIT);
+    if let Ok(mut rmp) = result_rmp {
+        println!("Client received from server, Received multiparts: {:?}", rmp);
+        let foo : IpcReply = rlp::decode(&rmp.pop().unwrap()).unwrap();
+        println!("Client received from server, IpcReply decoded: {:?}", foo);
+        let bar : String = rlp::decode(&foo.result).unwrap();
+        println!("Client received from server,  Result decoded: {:?}", bar);
+    } else {
+        println!("Error: Reply Timeout");
+    }
+}
+
+
+
+
+

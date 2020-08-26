@@ -130,12 +130,12 @@ pub fn pre_sign_tx<'a>(sender:&'a mut Account, receiver : &Account) ->String{
     sender.nonce=add.to_string();
     sign_tx(&sender.nonce.to_string(),
             &receiver.address.to_string(),
-            &"0".to_string(),
-            &"10000".to_string(),
+            &"100".to_string(),
+            &"10".to_string(),
             &"21240".to_string(),
-            &"7f7465737432000000000000000000000000000000000000000000000000000000600057".to_string(),
+            &"333366669999".to_string(),
             &sender.secret.to_string(),
-            &"3".to_string())
+            &"1".to_string())
 
 }
 pub fn sign_tx<'a>(nonce:&'a String,to:&'a String,value:&'a String,gas_price:&'a String,
