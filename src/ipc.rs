@@ -151,7 +151,19 @@ pub fn request_chain(socket: &Socket, request: IpcRequest) -> IpcReply {
     rlp::decode(&msg_bytes).unwrap()
 }
 
+pub fn query_last_block(socket: &Socket) -> Header {
+    let request = IpcRequest {
+        method: "LatestBlocks".into(),
+        id: 1,
+        params: rlp::encode(&LatestBlocksReq(1)),
+    };
 
+    let reply = request_chain(&socket, request);
+    let res: LatestBlocksResp = rlp::decode(&reply.result).unwrap();
+
+    let last_block_header = res.0.get(0).unwrap().clone();
+    last_block_header
+}
 
 
 #[cfg(test)]
