@@ -127,6 +127,12 @@ pub struct AccountInfoReq(pub Address);
 #[derive(Default, Debug, Clone, PartialEq,RlpEncodable, RlpDecodable)]
 pub struct AccountInfoResp(pub U256, pub U256);
 
+/// method: TxHashList, Request
+#[derive(Default, Debug, Clone, PartialEq,RlpEncodable, RlpDecodable)]
+pub struct TxHashListReq(pub H256);
+/// method: TxHashList, Response
+#[derive(Default, Debug, Clone, PartialEq,RlpEncodable, RlpDecodable)]
+pub struct TxHashListResp(pub Vec<H256>);
 
 pub fn query_account_info(socket: &Socket, account: &Address) -> (U256, U256) {
     let request = IpcRequest {
@@ -136,9 +142,9 @@ pub fn query_account_info(socket: &Socket, account: &Address) -> (U256, U256) {
     };
 
     let reply = request_chain(socket, request);
-    let res: AccountInfoResp = rlp::decode(&reply.result).unwrap();
+    let resp: AccountInfoResp = rlp::decode(&reply.result).unwrap();
 
-    let (nonce, balance) = (res.0, res.1);
+    let (nonce, balance) = (resp.0, resp.1);
     debug!("query accout info: {}, {}, {}", account, nonce, balance);
     (nonce, balance)
 }
@@ -159,9 +165,9 @@ pub fn query_last_block(socket: &Socket) -> Header {
     };
 
     let reply = request_chain(&socket, request);
-    let res: LatestBlocksResp = rlp::decode(&reply.result).unwrap();
+    let resp: LatestBlocksResp = rlp::decode(&reply.result).unwrap();
 
-    let last_block_header = res.0.get(0).unwrap().clone();
+    let last_block_header = resp.0.get(0).unwrap().clone();
     last_block_header
 }
 
@@ -173,11 +179,28 @@ pub fn query_latest_blocks(socket: &Socket, n: u64) -> Vec<Header> {
     };
 
     let reply = request_chain(&socket, request);
-    let res: LatestBlocksResp = rlp::decode(&reply.result).unwrap();
+    let resp: LatestBlocksResp = rlp::decode(&reply.result).unwrap();
 
-    let headers_vec = res.0;
+    let headers_vec = resp.0;
     headers_vec
 }
+
+pub fn query_tx_hash_list(socket: &Socket, block_hash: H256) -> Vec<H256> {
+    let request = IpcRequest {
+        method: "TxHashList".into(),
+        id: 1,
+        params: rlp::encode(&TxHashListReq(block_hash)),
+    };
+
+    let reply = request_chain(&socket, request);
+    let resp: TxHashListResp = rlp::decode(&reply.result).unwrap();
+
+    let hash_list = resp.0;
+    hash_list
+}
+
+
+
 
 #[cfg(test)]
 mod tests {
