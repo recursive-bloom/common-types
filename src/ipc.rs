@@ -165,6 +165,19 @@ pub fn query_last_block(socket: &Socket) -> Header {
     last_block_header
 }
 
+pub fn query_latest_blocks(socket: &Socket, n: u64) -> Vec<Header> {
+    let request = IpcRequest {
+        method: "LatestBlocks".into(),
+        id: 1,
+        params: rlp::encode(&LatestBlocksReq(n)),
+    };
+
+    let reply = request_chain(&socket, request);
+    let res: LatestBlocksResp = rlp::decode(&reply.result).unwrap();
+
+    let headers_vec = res.0;
+    headers_vec
+}
 
 #[cfg(test)]
 mod tests {
