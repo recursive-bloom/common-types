@@ -22,6 +22,7 @@ pub struct IpcRequest {
 #[derive(Default, Debug, Clone, PartialEq)]
 pub struct IpcReply {
     pub id: u64,
+    pub status: u64,
     pub result: Vec<u8>,
 }
 
@@ -52,8 +53,9 @@ impl Decodable for IpcRequest {
 
 impl Encodable for IpcReply {
     fn rlp_append(&self, s: &mut RlpStream){
-        s.begin_list(2);
+        s.begin_list(3);
         s.append(&self.id);
+        s.append(&self.status);
         s.append(&self.result);
     }
 }
@@ -63,11 +65,12 @@ impl Decodable for IpcReply {
         if rlp.as_raw().len() != rlp.payload_info()?.total() {
             return Err(DecoderError::RlpIsTooBig);
         }
-        if rlp.item_count()? != 2 {
+        if rlp.item_count()? != 3 {
             return Err(DecoderError::RlpIncorrectListLen);
         }
         Ok(IpcReply {
             id: rlp.val_at(0)?,
+            status: rlp.val_at(1)?,
             result: rlp.val_at(1)?,
         })
     }
