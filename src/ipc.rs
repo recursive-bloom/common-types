@@ -137,6 +137,10 @@ pub struct TxHashListReq(pub H256);
 #[derive(Default, Debug, Clone, PartialEq,RlpEncodable, RlpDecodable)]
 pub struct TxHashListResp(pub Vec<H256>);
 
+/// method: Response message,eg. error message, Response
+#[derive(Default, Debug, Clone, PartialEq,RlpEncodable, RlpDecodable)]
+pub struct MessageResp(String);
+
 pub fn query_account_info(socket: &Socket, account: &Address) -> (U256, U256) {
     let request = IpcRequest {
         method: "AccountInfo".into(),
