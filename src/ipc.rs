@@ -71,7 +71,7 @@ impl Decodable for IpcReply {
         Ok(IpcReply {
             id: rlp.val_at(0)?,
             status: rlp.val_at(1)?,
-            result: rlp.val_at(1)?,
+            result: rlp.val_at(2)?,
         })
     }
 }
